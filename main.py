@@ -67,12 +67,8 @@ def run_agent():
                 logger.debug(f"Fetching content for article ID {article_id}: {link}")
                 content = fetch_full_content(link)
                 
-                # Use a specific flag if extraction failed, preventing infinite loops 
-                # over the same article link when raw_content stays NULL
-                if not content:
-                    content = "[CONTENT_EXTRACTION_FAILED]"
-                
-                db.update_article_content(article_id, content)
+                if content:
+                    db.update_article_content(article_id, content)
                 success_count += 1
                 
                 # Polite delay between requests

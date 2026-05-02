@@ -1,33 +1,41 @@
-import os
 import logging
-import requests
+import cloudscraper
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger("full_content.fetcher")
 
-def fetch_full_content(url: str, timeout: int = 30) -> str:
+# Create a scraper that mimics a real Chrome browser on Windows
+scraper = cloudscraper.create_scraper(
+    browser={
+        'browser': 'chrome',
+        'platform': 'windows',
+        'desktop': True
+    }
+)
+
+def fetch_full_content(url: str, timeout: int = 15) -> str:
     """
-    Downloads and extracts the main text content from a URL using Jina Reader API.
-    This bypasses Datacenter IP blocks (403 Forbidden) that plague cloud VMs
-    by delegating the scraping and Javascript execution to Jina's proxy network.
-    Returns clean Markdown text.
+    Downloads and extracts the main text content from a URL using BeautifulSoup.
+    Returns empty string if extraction fails.
     """
     try:
-        jina_url = f"https://r.jina.ai/{url}"
-        headers = {
-            "Accept": "text/plain"  # Request clean text/markdown
-        }
-        
-        # Optional: Use API key if provided in .env to increase rate limits
-        jina_api_key = os.getenv("JINA_API_KEY")
-        if jina_api_key:
-            headers["Authorization"] = f"Bearer {jina_api_key}"
-            
-        response = requests.get(jina_url, headers=headers, timeout=timeout)
+        response = scraper.get(url, timeout=timeout)
         response.raise_for_status()
         
-        text = response.text.strip()
-        if text:
-            return text
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Remove non-content elements
+        for element in soup(["script", "style", "nav", "header", "footer", "aside"]):
+            element.extract()
+            
+        # Extract text and clean up whitespace
+        text = soup.get_text(separator='\n')
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+        
+        if cleaned_text:
+            return cleaned_text
         else:
             logger.warning(f"No text extracted from: {url}")
             return ""
