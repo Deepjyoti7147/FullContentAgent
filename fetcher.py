@@ -1,8 +1,17 @@
 import logging
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger("full_content.fetcher")
+
+# Create a scraper that mimics a real Chrome browser on Windows
+scraper = cloudscraper.create_scraper(
+    browser={
+        'browser': 'chrome',
+        'platform': 'windows',
+        'desktop': True
+    }
+)
 
 def fetch_full_content(url: str, timeout: int = 15) -> str:
     """
@@ -10,8 +19,7 @@ def fetch_full_content(url: str, timeout: int = 15) -> str:
     Returns empty string if extraction fails.
     """
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        response = requests.get(url, headers=headers, timeout=timeout)
+        response = scraper.get(url, timeout=timeout)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
