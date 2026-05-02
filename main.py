@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import logging
+import urllib.parse
 from dotenv import load_dotenv
 
 from database import DBHandler
@@ -20,8 +21,8 @@ def build_dsn() -> str:
     if os.getenv("POSTGRES_DSN"):
         return os.getenv("POSTGRES_DSN")
     
-    user = os.getenv("POSTGRES_USER", "postgres")
-    password = os.getenv("POSTGRES_PASSWORD", "")
+    user = urllib.parse.quote_plus(os.getenv("POSTGRES_USER", "postgres"))
+    password = urllib.parse.quote_plus(os.getenv("POSTGRES_PASSWORD", ""))
     host = os.getenv("POSTGRES_HOST", "localhost")
     port = os.getenv("POSTGRES_PORT", "5432")
     dbname = os.getenv("POSTGRES_DB", "postgres")
