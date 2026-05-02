@@ -67,8 +67,10 @@ def run_agent():
                 logger.debug(f"Fetching content for article ID {article_id}: {link}")
                 content = fetch_full_content(link)
                 
-                if content:
-                    db.update_article_content(article_id, content)
+                if not content:
+                    content = "[FAILED_TO_SCRAPE]"
+                
+                db.update_article_content(article_id, content)
                 success_count += 1
                 
                 # Polite delay between requests
